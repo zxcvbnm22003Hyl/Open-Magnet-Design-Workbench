@@ -1,0 +1,24 @@
+{
+  "name": "rat-mlfmm",
+  "version-string": "2.020.1",
+  "port-version": 1,
+  "description": "Rat-MLFMM C++ Library",
+  "homepage": "https://gitlab.com/Project-Rat/rat-mlfmm",
+  "license": "MIT",
+  "dependencies": [
+    "boost-sort",
+    "rat-common",
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    },
+    {
+      "name": "vcpkg-tool-ninja",
+      "host": true
+    }
+  ]
+}

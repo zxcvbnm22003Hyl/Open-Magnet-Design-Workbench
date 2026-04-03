@@ -1,0 +1,67 @@
+diff --git a/src/gpukernels.cu b/src/gpukernels.cu
+index 386346b..e59cdbb 100644
+--- a/src/gpukernels.cu
++++ b/src/gpukernels.cu
+@@ -42,8 +42,8 @@ namespace rat{namespace fmm{
+ 
+ 	// define the float4 type
+ 	#if defined(RAT_DOUBLE_PRECISION) && defined(RAT_CUDA_DOUBLE_PRECISION)
+-		typedef double4 cufltp4;
+-		#define MAKE_FLOAT4(x,y,z,w) make_double4(x,y,z,w);
++		typedef double4_16a cufltp4;
++		#define MAKE_FLOAT4(x,y,z,w) make_double4_16a(x,y,z,w);
+ 	#else
+ 		typedef float4 cufltp4;
+ 		#define MAKE_FLOAT4(x,y,z,w) make_float4(x,y,z,w);
+@@ -54,10 +54,10 @@ namespace rat{namespace fmm{
+ 		return MAKE_FLOAT4(a.x + b.x, a.y + b.y, a.z + b.z, RAT_CUCONST(0.0));
+ 	}
+ 
+-	// addition for double4 and cufltp4
++	// addition for double4_16a and cufltp4
+ 	#ifndef RAT_CUDA_DOUBLE_PRECISION
+-	__device__ inline double4 add(const double4 a, const cufltp4 b){
+-		return make_double4(a.x + b.x, a.y + b.y, a.z + b.z, RAT_CUCONST(0.0));
++	__device__ inline double4_16a add(const double4_16a a, const cufltp4 b){
++		return make_double4_16a(a.x + b.x, a.y + b.y, a.z + b.z, RAT_CUCONST(0.0));
+ 	}
+ 	#endif
+ 
+@@ -131,17 +131,25 @@ namespace rat{namespace fmm{
+ 		// get GPU device propertgies
+ 		cudaDeviceProp prop;
+ 		gpuErrchk(cudaGetDeviceProperties(&prop, device_index));
++
++		// cuda toolkit 13 deprecated these properties in cudaDeviceProp
++        int clockRate;
++        int memoryClockRate;
++        cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, device_index);
++        cudaDeviceGetAttribute(&memoryClockRate, cudaDevAttrMemoryClockRate, device_index);
++
+ 		lg->msg("%s%s%s\n",KCYN,prop.name,KNRM);
+ 		lg->msg("Device Index: %s%i%s\n",KYEL,device_index,KNRM);
+-		lg->msg("Clock Rate [MHz]: %s%d%s\n",KYEL,prop.clockRate/1000,KNRM);
+-		lg->msg("Memory Clock Rate [MHz]: %s%d%s\n",KYEL,prop.memoryClockRate/1000,KNRM);
++		lg->msg("Clock Rate [MHz]: %s%d%s\n",KYEL,clockRate/1000,KNRM);
++		lg->msg("Memory Clock Rate [MHz]: %s%d%s\n",KYEL,memoryClockRate/1000,KNRM);
+ 		lg->msg("Memory Bus Width [bits]: %s%d%s\n",KYEL,prop.memoryBusWidth,KNRM);
+ 		lg->msg("Peak Memory Bandwidth [GB/s]: %s%4.2f%s\n",KYEL, 
+-			2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6,KNRM);
++			2.0*memoryClockRate*(prop.memoryBusWidth/8)/1.0e6,KNRM);
+ 		lg->msg("Global Memory Size: %s%6.2f%s [GB]\n",KYEL,(float)prop.totalGlobalMem/1024/1024/1024,KNRM);
+ 		lg->msg("Multi processor count: %s%i%s\n",KYEL,prop.multiProcessorCount,KNRM);
+ 		lg->msg("\n");
+ 
++
+ 		// char name[256];
+ 		// size_t totalGlobalMem;
+ 		// size_t sharedMemPerBlock;
+@@ -1402,7 +1410,7 @@ namespace rat{namespace fmm{
+ 		// cufltp4 lo_M = MAKE_FLOAT4(
+ 		// 	RAT_CUCONST(0.0),RAT_CUCONST(0.0),
+ 		// 	RAT_CUCONST(0.0),RAT_CUCONST(0.0));
+-		double4 lo_M = make_double4(
++		double4_16a lo_M = make_double4_16a(
+ 			RAT_CUCONST(0.0),RAT_CUCONST(0.0),
+ 		 	RAT_CUCONST(0.0),RAT_CUCONST(0.0));
+ 
