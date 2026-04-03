@@ -99,6 +99,28 @@ Build the `pyrat` wheel:
 .\scripts\project_rat_manager.ps1 -Action build-pyrat-wheel
 ```
 
+## Proxy Behavior
+
+Build and bootstrap commands no longer force a local proxy.
+
+Default behavior:
+
+- if your current environment already has `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, or `NO_PROXY`, the script inherits them
+- if no proxy environment variables are present, commands run direct
+
+You can also override that behavior explicitly:
+
+```powershell
+.\scripts\project_rat_manager.ps1 -Action bootstrap-vcpkg -ProxyUrl http://127.0.0.1:7897
+.\scripts\project_rat_manager.ps1 -Action bootstrap-vcpkg -DisableProxy
+```
+
+To inspect the effective mode on a machine, run:
+
+```powershell
+.\scripts\project_rat_manager.ps1 -Action status
+```
+
 ## Portable Package
 
 This repository includes a GitHub Actions workflow that builds a Windows portable package.

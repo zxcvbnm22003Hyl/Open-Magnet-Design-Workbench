@@ -20,7 +20,9 @@ param(
     [string]$Triplet = "x64-windows-release",
     [string]$Example = "dmshyoke1",
     [string]$ProjectDir = "",
-    [string]$ExecutableName = ""
+    [string]$ExecutableName = "",
+    [string]$ProxyUrl = "",
+    [switch]$DisableProxy
 )
 
 Set-StrictMode -Version Latest
@@ -391,6 +393,64 @@ function Reset-BuildDir {
     }
 }
 
+function Get-InheritedProxySettings {
+    $proxySettings = [ordered]@{}
+    foreach ($name in @("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy")) {
+        $value = [Environment]::GetEnvironmentVariable($name)
+        if (-not [string]::IsNullOrWhiteSpace($value)) {
+            $proxySettings[$name] = $value.Trim()
+        }
+    }
+
+    return $proxySettings
+}
+
+function Get-ProxyModeLabel {
+    if ($DisableProxy) {
+        return "disabled"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ProxyUrl)) {
+        return "explicit"
+    }
+
+    $inheritedProxySettings = Get-InheritedProxySettings
+    if ($inheritedProxySettings.Count -gt 0) {
+        return "inherited"
+    }
+
+    return "direct"
+}
+
+function Get-ProxyEnvSetup {
+    $envSetup = @()
+
+    if ($DisableProxy) {
+        foreach ($name in @("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy")) {
+            $envSetup += 'set "' + $name + '="'
+        }
+        return $envSetup
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ProxyUrl)) {
+        foreach ($name in @("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")) {
+            $envSetup += 'set "' + $name + '=' + $ProxyUrl.Trim() + '"'
+        }
+
+        $noProxyUpper = [Environment]::GetEnvironmentVariable("NO_PROXY")
+        if (-not [string]::IsNullOrWhiteSpace($noProxyUpper)) {
+            $envSetup += 'set "NO_PROXY=' + $noProxyUpper.Trim() + '"'
+        }
+
+        $noProxyLower = [Environment]::GetEnvironmentVariable("no_proxy")
+        if (-not [string]::IsNullOrWhiteSpace($noProxyLower)) {
+            $envSetup += 'set "no_proxy=' + $noProxyLower.Trim() + '"'
+        }
+    }
+
+    return $envSetup
+}
+
 function Invoke-InBuildEnv {
     param(
         [Parameter(Mandatory = $true)][string]$WorkingDirectory,
@@ -403,9 +463,7 @@ function Invoke-InBuildEnv {
     if ($toolPrefix) {
         $envSetup += 'set "PATH=' + $toolPrefix + ';!PATH!"'
     }
-    $envSetup += 'set "HTTP_PROXY=http://127.0.0.1:7897"'
-    $envSetup += 'set "HTTPS_PROXY=http://127.0.0.1:7897"'
-    $envSetup += 'set "ALL_PROXY=http://127.0.0.1:7897"'
+    $envSetup += Get-ProxyEnvSetup
     $envSetup += 'set "VCPKG_ROOT="'
 
     $msvcRoot = Get-MsvcToolsRoot
@@ -650,6 +708,19 @@ switch ($Action) {
         Write-Host ("cmake         : " + [string](Get-WorkspaceToolPath -Root (Join-Path $WorkspaceRoot "tools") -Pattern "cmake.exe"))
         Write-Host ("ninja         : " + [string](Get-WorkspaceToolPath -Root (Join-Path $WorkspaceRoot "tools") -Pattern "ninja.exe"))
         Write-Host ("python        : " + [string](Get-Command python.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source))
+        Write-Host ("proxy mode    : " + (Get-ProxyModeLabel))
+        $inheritedProxySettings = Get-InheritedProxySettings
+        if ($DisableProxy) {
+            Write-Host "proxy details : inherited proxy variables will be cleared for build commands"
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($ProxyUrl)) {
+            Write-Host ("proxy url     : " + $ProxyUrl.Trim())
+        }
+        elseif ($inheritedProxySettings.Count -gt 0) {
+            foreach ($name in $inheritedProxySettings.Keys) {
+                Write-Host ("proxy " + $name.PadRight(10) + ": " + $inheritedProxySettings[$name])
+            }
+        }
         if (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe")) {
             Write-Host ("vcpkg.exe     : " + (Join-Path $VcpkgRoot "vcpkg.exe"))
         }
