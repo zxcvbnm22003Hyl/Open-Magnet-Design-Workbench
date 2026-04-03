@@ -1,4 +1,9 @@
 # Rat-Workbench
+
+## 开放学术声明
+
+我们拥抱开源，我们不习惯加入封闭的学术环境，我们致力于打造一个开放、包容的学术交流环境，任何设置门槛、壁垒、收取利益的操作都是不被我们所欢迎的，有任何学术上的问题都可以通过邮箱与我交流。
+
 <img width="1918" height="1016" alt="屏幕截图 2026-04-03 131545" src="https://github.com/user-attachments/assets/ffef6f6d-13fc-41c4-b0f4-72e33ace46ab" />
 <img width="1919" height="1014" alt="屏幕截图 2026-04-03 092740" src="https://github.com/user-attachments/assets/640ee836-1f73-448a-8114-2f155d37b72d" />
 
@@ -317,7 +322,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup_project_rat_
 - 这条路径耗时会明显更长
 - 安装 Visual Studio Build Tools 可能需要管理员权限和 UAC 确认
 - `vcpkg` 与 `rat-models` 安装需要联网
-
-## 开放学术声明
-
-我们拥抱开源，我们不习惯加入封闭的学术环境，我们致力于打造一个开放、包容的学术交流环境，任何设置门槛、壁垒、收取利益的操作都是不被我们所欢迎的，有任何学术上的问题都可以通过邮箱与我交流。
